@@ -1,7 +1,6 @@
 #include "params.h"
 #include "disk.h"
 
-#include <fuse.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

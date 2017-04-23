@@ -6,9 +6,9 @@ TARG = fly_swamp
 
 # specify compiler, flags and libs here
 CC = gcc
-OPTS = -Wall -O0 -g `pkg-config fuse --cflags`
+OPTS = -Wall -O0 -g
 OBJS = $(SRCS:.c=.o)
-LIBS = `pkg-config fuse --libs` # placeholder - not needed for forksort
+LIBS = # No libs required
 
 # 'all' is not really needed
 all: $(TARG)

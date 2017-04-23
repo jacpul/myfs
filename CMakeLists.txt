@@ -15,6 +15,3 @@ set(SOURCE_FILES
         params.h)
 
 add_executable(fly_swamp ${SOURCE_FILES})
-target_link_libraries(fly_swamp ${FUSE_LIBRARIES})
-target_include_directories(fly_swamp PUBLIC ${FUSE_INCLUDE_DIRS})
-target_compile_options(fly_swamp PUBLIC ${FUSE_CFLAGS_OTHER})
