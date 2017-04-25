@@ -17,7 +17,7 @@ fi
 rm -rf flies swamps
 mkdir flies swamps
 
-echo "Comiling..."
+echo "Compiling..."
 make &> /dev/null #mount &> /dev/null
 if [[ $? -ne 0 ]]
 then
