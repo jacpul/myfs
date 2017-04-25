@@ -118,7 +118,7 @@ int add_rec_to_dir_inode(uint inodenum, dirrec *rec) {
   // Update inode.
   set_inode(inodenum, dirinode);
 
-  free_dirrec_list(first);
+  free_dirrec_list(first->next);
   free(dirinode);
   return 0;
 }
