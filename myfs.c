@@ -37,6 +37,7 @@ int my_mknod(const char *path) {
 
   // FIXME: Write this function
   // Use: get_parent_dir_inode to get the inode number of the parent dir.
+  // Use: get_file_from_path to get the filename from the path.
 
   log_msg("    Parent dir inode: %u Filename: '%s'\n", parent_inode_num, filename);
 
