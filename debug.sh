@@ -11,7 +11,7 @@ TEXT
 exit 0
 }
 
-f=$(ls tests/$1*.test &> /dev/null)
+f=$(ls tests/$1*.test 2> /dev/null)
 if [[ $? -ne 0 ]]; then
     echo "Invalid test number"
     echo
@@ -48,7 +48,6 @@ name=$(echo $(basename $f) | cut -d"." -f1)
 
 echo "Name: '$name'"
 
-exit 0
 
 ./fly_swamp fs.iso < "$f" > "flies/$name"
 python read_fs.py --dump -p > "swamps/$name"
