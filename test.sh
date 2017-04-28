@@ -83,11 +83,11 @@ BANNED="strcpy strcat strtok sprintf vsprintf gets strlen"
 echo "Checking for banned functions: $BANNED"
 for bfunc in $BANNED
 do
-    if grep -nE "\s${bfunc}\W" $SOURCEFILE &> /dev/null
+    if grep -E "\s${bfunc}\s*\(" $SOURCEFILE &> /dev/null
     then
         echo "BANNED FUNCTION '$bfunc' DETECTED on line:"
         echo
-        grep -nE "\s${bfunc}\W" $SOURCEFILE
+        grep -nE "\s${bfunc}\s*\(" $SOURCEFILE
         echo
         echo "Remove all banned functions from your code and try again."
         exit 1
