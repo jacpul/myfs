@@ -1,0 +1,8 @@
+.idea
+*.o
+*.log
+*.iso
+fly_swamp
+cmake-*
+/flies
+/swamps
