@@ -11,7 +11,7 @@ TEXT
 exit 0
 }
 
-f=$(ls tests/$1*.test 2> /dev/null)
+f=$(ls tests/$1_*.test 2> /dev/null)
 if [[ $? -ne 0 ]]; then
     echo "Invalid test number"
     echo
