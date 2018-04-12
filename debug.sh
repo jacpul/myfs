@@ -50,7 +50,7 @@ echo "Name: '$name'"
 
 
 ./fly_swamp fs.iso < "$f" > "flies/$name"
-python read_fs.py --dump -p > "swamps/$name"
+python read_fs.py dump -p > "swamps/$name"
 if [[ $? -eq 0 ]]; then
     diff "flies/$name" "tests/good/flies/$name" &> /dev/null
     if [[ $? -ne 0 ]]; then

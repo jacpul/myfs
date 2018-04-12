@@ -101,7 +101,7 @@ echo
 tests=0
 good=0
 
-for t in tests/*.test
+for t in $(ls tests/*.test | sort -n -t / -k 2)
 do
 #    echo "Cleaning and compiling..."
     make clean &> /dev/null; make &> /dev/null
@@ -113,7 +113,7 @@ do
     name=$(echo $(basename $t) | cut -d"." -f1)
 #    echo "Running test '$name'..."
     ./fly_swamp fs.iso < "$t" > "flies/$name"
-    python read_fs.py --dump -p > "swamps/$name"
+    python read_fs.py dump -p > "swamps/$name"
     if [[ $? -eq 0 ]]; then
         diff "flies/$name" "tests/good/flies/$name" &> /dev/null
         if [[ $? -ne 0 ]]; then
