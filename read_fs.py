@@ -214,8 +214,8 @@ def main():
 
     parser_bitmap = subparsers.add_parser('bitmap', help='Print out a bitmap')
     bitmap_group = parser_bitmap.add_mutually_exclusive_group(required=True)
-    bitmap_group.add_argument('-d', '--data', action='store_true')
-    bitmap_group.add_argument('-i', '--inode', action='store_true')
+    bitmap_group.add_argument('-d', '--data', action='store_true', help='Print the data block bitmap.')
+    bitmap_group.add_argument('-i', '--inode', action='store_true', help='Print the inode bitmap.')
     parser_bitmap.set_defaults(func=bitmap)
 
     parser_inode = subparsers.add_parser('inode', help='Print out data using an inode number')
