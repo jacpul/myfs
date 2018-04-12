@@ -202,6 +202,7 @@ def inode(args):
                 read_dir(num)
             elif node.get("type", None) == 1:
                 read_file(num)
+        print("\n")
 
 
 def main():
@@ -219,7 +220,7 @@ def main():
     parser_bitmap.set_defaults(func=bitmap)
 
     parser_inode = subparsers.add_parser('inode', help='Print out data using an inode number')
-    parser_inode.add_argument('-d', '--data', action='store_true')
+    parser_inode.add_argument('-d', '--data', action='store_true', help='Prints data for inode and associated blocks')
     parser_inode.add_argument('nums', type=int, nargs='+', help='The numbers of the inodes to be outputed.')
     parser_inode.set_defaults(func=inode)
 
