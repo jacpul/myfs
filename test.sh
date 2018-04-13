@@ -11,15 +11,18 @@ SOURCEFILE="myfs.c"
 DO_COMPILE=1
 DO_CLEANUP=1
 QUIT_ON_ERROR=0
+SINGLE_TEST=0
+TEST_FILE=0
 
 usage()
 {
 cat <<TEXT
 test.sh -- test your myfs
 Options:
-    -q  Quit on any error.
-    -d  Skip clean up on exit.
-    -h  Print this screen.
+    -q    Quit on any error.
+    -d    Skip clean up on exit.
+    -h    Print this screen.
+    -n X  Run test X without clean up.
 TEXT
 
 exit 0
@@ -46,7 +49,7 @@ clean()
 	fi
 }
 
-while getopts "qdh" OPTION
+while getopts "qdhn:" OPTION
 do
     case $OPTION in
         q)
@@ -56,6 +59,21 @@ do
         d)
             DO_CLEANUP=0
             echo "Will skip final cleanup."
+            ;;
+        n)
+            TEST_NUM=${OPTARG}
+            TEST_FILE=$(ls tests/${TEST_NUM}_*.test 2> /dev/null)
+            if [[ $? -ne 0 ]]; then
+                echo "Invalid test number: $TEST_NUM"
+                echo
+                usage
+            fi
+            n=$(echo "$TEST_FILE" | wc -l)
+            if [[ n -ne 1 ]]
+            then
+                usage
+            fi
+            SINGLE_TEST=1
             ;;
         h)
             usage
@@ -97,6 +115,33 @@ do
 done
 echo "All is good here."
 echo
+
+if [[ $SINGLE_TEST == 1 ]]
+then
+
+    echo "Will run test: $TEST_NUM"
+
+    name=$(echo $(basename $TEST_FILE) | cut -d"." -f1)
+    echo "Name: '$name'"
+    ./fly_swamp fs.iso < "$TEST_FILE" > "flies/$name"
+    python read_fs.py dump -p > "swamps/$name"
+    if [[ $? -eq 0 ]]; then
+        diff "flies/$name" "tests/good/flies/$name" &> /dev/null
+        if [[ $? -ne 0 ]]; then
+            echo "Test '$name' Failed :("
+        else
+            diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
+            if [[ $? -ne 0 ]]; then
+                echo "Test '$name' Failed :("
+            else
+                echo "Test '$name' Passed :)"
+            fi
+        fi
+    else
+        echo "Test '$name' Failed :("
+    fi
+    exit 0
+fi
 
 tests=0
 good=0
