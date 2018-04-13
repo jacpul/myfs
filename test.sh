@@ -96,7 +96,7 @@ then
     fi
 fi
 
-BANNED="strcpy strcat strtok sprintf vsprintf gets strlen"
+BANNED="strcpy strcat strtok sprintf vsprintf gets strlen strcmp"
 
 echo "Checking for banned functions: $BANNED"
 for bfunc in $BANNED
