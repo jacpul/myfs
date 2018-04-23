@@ -70,6 +70,7 @@ int fs_main_real(int argc, char *argv[], const struct fs_operations *op, size_t 
       continue;
     }
     switch (cmd) {
+      // TODO: Fix this to handle names with spaces.
       case 'e': // Exit
         running = 0;
         break;
@@ -103,7 +104,12 @@ int fs_main_real(int argc, char *argv[], const struct fs_operations *op, size_t 
         sscanf(line, "%*c %ms %u %u", &path, &offset, &size);
         if (DEBUG) fprintf(stderr, "Reading %u bytes from '%s' @ %u...\n", size, path, offset);
 
-        if (size <= 0 || size > MAX_LINE_SIZE) {
+        if (size < 0) {
+          if (DEBUG) fprintf(stderr, "size is too small\n");
+          ERR;
+        }
+
+        if (size > MAX_LINE_SIZE) {
           if (DEBUG) fprintf(stderr, "size is too large\n");
           ERR;
         }
@@ -118,12 +124,12 @@ int fs_main_real(int argc, char *argv[], const struct fs_operations *op, size_t 
         ret = op->read((uint) file_stat.st_ino, data, size, offset);
 
         if (ret != size) {
+          // This isn't an error just means we read passed the end of the file's data.
           if (DEBUG) fprintf(stderr, "read returned '%d' != size '%d'!\n", ret, size);
-          ERR;
         }
 
         // Print the output in hex
-        for (int i = 0; i < size; ++i) {
+        for (int i = 0; i < ret; ++i) {
           fprintf(stdout, "%02X", data[i]);
         }
         fprintf(stdout, "\n");
