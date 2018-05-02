@@ -88,7 +88,7 @@ mkdir flies swamps
 if [[ $DO_COMPILE == 1 ]]
 then
     echo "Compiling..."
-    make &> /dev/null #mount &> /dev/null
+    make &> /dev/null
     if [[ $? -ne 0 ]]
     then
         echo "Error compiling (run 'make' to see error)."
@@ -124,18 +124,22 @@ then
     name=$(echo $(basename $TEST_FILE) | cut -d"." -f1)
     echo "Name: '$name'"
     ./fly_swamp fs.iso < "$TEST_FILE" > "flies/$name"
-    python read_fs.py dump -p > "swamps/$name"
     if [[ $? -eq 0 ]]; then
-        diff "flies/$name" "tests/good/flies/$name" &> /dev/null
-        if [[ $? -ne 0 ]]; then
-            echo "Test '$name' Failed :("
-        else
-            diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
+        python read_fs.py dump -p > "swamps/$name"
+        if [[ $? -eq 0 ]]; then
+            diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
                 echo "Test '$name' Failed :("
             else
-                echo "Test '$name' Passed :)"
+                diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
+                if [[ $? -ne 0 ]]; then
+                    echo "Test '$name' Failed :("
+                else
+                    echo "Test '$name' Passed :)"
+                fi
             fi
+        else
+            echo "Test '$name' Failed :("
         fi
     else
         echo "Test '$name' Failed :("
@@ -158,24 +162,31 @@ do
     name=$(echo $(basename $t) | cut -d"." -f1)
 #    echo "Running test '$name'..."
     ./fly_swamp fs.iso < "$t" > "flies/$name"
-    python read_fs.py dump -p > "swamps/$name"
     if [[ $? -eq 0 ]]; then
-        diff "flies/$name" "tests/good/flies/$name" &> /dev/null
-        if [[ $? -ne 0 ]]; then
-            echo "Test '$name' Failed :("
-            if [[ $QUIT_ON_ERROR == 1 ]]; then
-                break
-            fi
-        else
-            diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
+        python read_fs.py dump -p > "swamps/$name"
+        if [[ $? -eq 0 ]]; then
+            diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
                 echo "Test '$name' Failed :("
                 if [[ $QUIT_ON_ERROR == 1 ]]; then
                     break
                 fi
             else
-                echo "Test '$name' Passed :)"
-                ((good++))
+                diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
+                if [[ $? -ne 0 ]]; then
+                    echo "Test '$name' Failed :("
+                    if [[ $QUIT_ON_ERROR == 1 ]]; then
+                        break
+                    fi
+                else
+                    echo "Test '$name' Passed :)"
+                    ((good++))
+                fi
+            fi
+        else
+            echo "Test '$name' Failed :("
+            if [[ $QUIT_ON_ERROR == 1 ]]; then
+                break
             fi
         fi
     else
