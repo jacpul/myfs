@@ -125,7 +125,7 @@ then
     echo "Name: '$name'"
     ./fly_swamp fs.iso < "$TEST_FILE" > "flies/$name"
     if [[ $? -eq 0 ]]; then
-        python read_fs.py dump -p > "swamps/$name"
+        ./read_fs.py dump -p > "swamps/$name"
         if [[ $? -eq 0 ]]; then
             diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
@@ -163,7 +163,7 @@ do
 #    echo "Running test '$name'..."
     ./fly_swamp fs.iso < "$t" > "flies/$name"
     if [[ $? -eq 0 ]]; then
-        python read_fs.py dump -p > "swamps/$name"
+        ./read_fs.py dump -p > "swamps/$name"
         if [[ $? -eq 0 ]]; then
             diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
