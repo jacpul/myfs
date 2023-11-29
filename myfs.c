@@ -174,6 +174,8 @@ int my_mknod(const char *path) {
   new_dir_entry.name[MAX_FILENAME] = '\0';  // get rid of the name
   new_dir_entry.next = NULL;  // Initialize next pointer
 
+  // do we have to add the new directory to the parents directory?
+
   // add the directory, if it isnt 0 it failed
   if (add_rec_to_dir_inode(parent_inode_num, &new_dir_entry) != 0) {
     log_msg("Failed to add the directory entry\n");
