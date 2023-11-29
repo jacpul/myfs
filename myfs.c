@@ -20,7 +20,43 @@
 
 uint get_next_free_block() {
   // FIXME: Write this function
-  return 0;
+  d_bmap bitmap;
+
+  // filling the bitmap structure
+  if (get_d_bmap(bitmap) == 0) {
+
+    // free block variable
+    size_t free_block_index;
+
+    // attempting to find a free block in the bitmap
+    for (free_block_index = 0; free_block_index < NUM_OF_BLOCKS; ++free_block_index) {
+
+      // if its is not in use mark it as being in use
+      if (bitmap[free_block_index] == '0') {
+
+        // marking as in use
+        bitmap[free_block_index] = '1';
+
+        // if set_d_bmap is successfull save the data bitmap and return the allocated block number
+        if (set_d_bmap(bitmap) == 0){
+
+          // returning the freed block number
+          return free_block_index;
+        } else {
+          
+          // something went wrong
+          return -1;
+        }     
+      }
+    }
+
+    // something went wrong
+    return -1;
+  }else{
+    // something went wrong
+    return -1;
+  }
+
 }
 
 uint get_next_free_inode() {
