@@ -45,14 +45,18 @@ uint get_next_free_block() {
         } else {
           
           // something went wrong
+          log_msg("there is a problem in set_d_bmap");
           return -1;
         }     
       }
     }
 
-    // something went wrong
+    // no free block found
+    log_msg("there is no free block or your if statements are not working");
     return -1;
   }else{
+    
+    log_msg("there is a problem in set_d_bmap");
     // something went wrong
     return -1;
   }
@@ -60,9 +64,50 @@ uint get_next_free_block() {
 }
 
 uint get_next_free_inode() {
-  // FIXME: Write this function
-  return 0;
+    // FIXME: Write this function
+    i_bmap bitmap;
+
+    // fill the inode bitmap structure
+    if (get_i_bmap(bitmap) == 0) {
+
+        // free inode variable
+        size_t free_inode_index;
+
+        // attempting to find a free inode in the bitmap
+        for (free_inode_index = 2; free_inode_index < NUM_OF_INODES; ++free_inode_index) {
+            // inodes 0 and 1 cant be sed
+
+            // if it not inode not in use mark it as in use
+            if (bitmap[free_inode_index] == '0') {
+
+                // marking as in use
+                bitmap[free_inode_index] = '1';
+
+                // if set_i_bmap is successful save the inode bitmap and return the allocated inode number
+                if (set_i_bmap(bitmap) == 0) {
+
+                    // returning the newly allocated inode number
+                    return free_inode_index;
+                } else {
+
+                    // Something went wrong
+                    log_msg("There is a problem in set_i_bmap");
+                    return -1;
+                }
+            }
+        }
+
+        // No free inode found
+        log_msg("No free inode found");
+        return -1;
+    } else {
+
+        // Something went wrong
+        log_msg("There is a problem in get_i_bmap");
+        return -1;
+    }
 }
+
 
 int my_mknod(const char *path) {
   int retstat = 0;
