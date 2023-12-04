@@ -1,4 +1,4 @@
-// Authors: Your name and your super awesome partner's name
+// Authors: Jace Pulkrabek and Gabe Findell
 // This program implements Very Simple File System (VSFS) based on http://pages.cs.wisc.edu/~remzi/OSFEP/file-implementation.pdf
 
 
@@ -32,10 +32,10 @@ uint get_next_free_block() {
     for (free_block_index = 0; free_block_index < NUM_OF_BLOCKS; ++free_block_index) {
 
       // if its is not in use mark it as being in use
-      if (bitmap[free_block_index] == '0') {
+      if (bitmap[free_block_index] == 0) {
 
         // marking as in use
-        bitmap[free_block_index] = '1';
+        bitmap[free_block_index] = 1;
 
         // if set_d_bmap is successfull save the data bitmap and return the allocated block number
         if (set_d_bmap(bitmap) == 0){
@@ -71,20 +71,23 @@ uint get_next_free_inode() {
     if (get_i_bmap(bitmap) == 0) {
 
         // free inode variable
-        size_t free_inode_index;
+        uint free_inode_index;
 
         // attempting to find a free inode in the bitmap
         for (free_inode_index = 2; free_inode_index < NUM_OF_INODES; ++free_inode_index) {
             // inodes 0 and 1 cant be sed
 
             // if it not inode not in use mark it as in use
-            if (bitmap[free_inode_index] == '0') {
+            if (bitmap[free_inode_index] == 0) {
 
                 // marking as in use
-                bitmap[free_inode_index] = '1';
+                bitmap[free_inode_index] = 1;
 
                 // if set_i_bmap is successful save the inode bitmap and return the allocated inode number
                 if (set_i_bmap(bitmap) == 0) {
+
+                    // found inode
+                    log_msg("Found a free inode\n");
 
                     // returning the newly allocated inode number
                     return free_inode_index;
@@ -98,8 +101,8 @@ uint get_next_free_inode() {
         }
 
         // No free inode found
-        log_msg("No free inode found\n");
-        return -1;
+        log_msg("no free inode was found\n");
+        return 0;
     } else {
 
         // Something went wrong
@@ -114,8 +117,37 @@ int my_mknod(const char *path) {
   int retstat = 0;
   log_msg("my_mknod(path=\"%s\")\n", path);
 
+  uint freeI = get_next_free_inode();
+
   char *filename;
   uint parent_inode_num;
+
+  // make the inode structure for the new file -- help
+  inode new_inode;
+
+  new_inode.blocks = 0;
+  new_inode.type = TYPE_FILE;
+  new_inode.size = 0;
+
+    // save the inode. if set_inode return isnt 0 it failed
+  if (set_inode(freeI, &new_inode) != 0) {
+    log_msg("failed to save the new inode to disk.\n");
+
+    // free the memory to avoid memory leak
+    free(filename);
+    return -1;
+  }
+
+  // if new inode num is -1 we failed to find a free inode
+  if (freeI == -1) {
+
+    log_msg("failed to find a free inode or something went wrong in get next free inode\n");
+
+    // free the memory to avoid memory leak
+    free(filename);
+
+    return -1;
+  }
 
   // Use: get_parent_dir_inode to get the inode number of the parent dir.
   parent_inode_num = get_parent_dir_inode(path);
@@ -133,51 +165,15 @@ int my_mknod(const char *path) {
   }
 
   // Print the parent dir inode and filename
-  log_msg("    Parent dir inode: %u Filename: '%s'\n", parent_inode_num, filename);
+  log_msg("Parent dir inode: %u Filename: '%s'\n", parent_inode_num, filename);
 
-  // try to find a free inode for the new file
-  uint new_inode_num = get_next_free_inode();
-
-  // if new inode num is -1 we failed to find a free inode
-  if (new_inode_num == -1) {
-
-    log_msg("failed to find a free inode or something went wrong in get next free inode\n");
-
-    // free the memory to avoid memory leak
-    free(filename);
-
-    return -1;
-  }
-
-  // make the sinode structure for the new file -- help
-  inode new_inode;
-  new_inode.type = 0; // I have no idea what type ask for help -------------------------------
-  new_inode.size = 0;
-  new_inode.blocks = 0; 
-  new_inode.pointers[61] = 0;
-
-  // save the inode. if set_inode return isnt 0 it failed
-  if (set_inode(new_inode_num, &new_inode) != 0) {
-    log_msg("failed to save the new inode to disk.\n");
-
-    // free the memory to avoid memory leak
-    free(filename);
-    return -1;
-  }
-
-  // do we need to update the parent directory? if so how?
-
-  // Add the directory entry for the new file to the directory inode -- help
-  dirrec new_dir_entry;
-  new_dir_entry.inum = new_inode_num;
-  strncpy(new_dir_entry.name, filename, MAX_FILENAME); // get the filename into name
-  new_dir_entry.name[MAX_FILENAME] = '\0';  // get rid of the name
-  new_dir_entry.next = NULL;  // Initialize next pointer
-
-  // do we have to add the new directory to the parents directory?
+  // set the values in the dirrec structure
+  dirrec* new_dir = (dirrec*) malloc (sizeof(dirrec));
+  new_dir -> inum = freeI;
+  strncpy(new_dir -> name, filename, MAX_FILENAME); // get the filename into name
 
   // add the directory, if it isnt 0 it failed
-  if (add_rec_to_dir_inode(parent_inode_num, &new_dir_entry) != 0) {
+  if (add_rec_to_dir_inode(parent_inode_num, new_dir) != 0) {
     log_msg("Failed to add the directory entry\n");
 
     // free the memory to avoid memory leak
@@ -185,8 +181,8 @@ int my_mknod(const char *path) {
     return -1;
   }
 
-  // free the memory to avoid memory leak
-  free(filename);
+  log_msg("file name: %u\n", new_dir -> inum);
+  log_msg("Created Directory\n");
   
   return retstat;
 }
