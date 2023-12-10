@@ -216,7 +216,12 @@ int my_read(uint inodenum, char *buf, uint size, uint offset) {
     }
 
     // the number of bytes to read from this block
-    uint to_read = (BLOCKSIZE - block_offset < remaining) ? (BLOCKSIZE - block_offset) : remaining;
+    uint to_read;
+    if (BLOCKSIZE - block_offset < remaining) {
+    to_read = BLOCKSIZE - block_offset;
+    } else {
+    to_read = remaining;
+    }
 
     // make sure she dont go passed the end of the file
     if (offset + read_size + to_read > node.size) {
@@ -298,7 +303,12 @@ int my_write(uint inodenum, char *buf, uint size, uint offset) {
     }
       
     // copying from buf to block
-    uint to_copy = (BLOCKSIZE - block_offset < remaining) ? (BLOCKSIZE - block_offset) : remaining;
+    uint to_copy;
+    if (BLOCKSIZE - block_offset < remaining) {
+     to_copy = BLOCKSIZE - block_offset;
+    } else {
+     to_copy = remaining;
+    }
     memcpy(block + block_offset, buf + write_size, to_copy);
 
     // could not write to block
