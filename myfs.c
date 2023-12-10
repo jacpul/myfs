@@ -111,7 +111,6 @@ uint get_next_free_inode() {
     }
 }
 
-
 int my_mknod(const char *path) {
   // FIXME: Write this function
   int retstat = 0;
@@ -190,19 +189,142 @@ int my_mknod(const char *path) {
 int my_read(uint inodenum, char *buf, uint size, uint offset) {
   int retstat = 0;
   log_msg("my_read(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
+  
+  inode node;
+  
+  // no i node found
+  if (get_inode(inodenum, &node) != 0) {
+    log_msg("no inode found!\n");
+    return -1;
+  }
 
-  // FIXME: Write this function
+  // starting block and offset block
+  uint start_block = offset / BLOCKSIZE;
+  uint block_offset = offset % BLOCKSIZE;
 
-  return retstat;
+  uint remaining = size;
+  uint read_size = 0;
+
+  // go through the blocks
+  while (remaining > 0 && start_block < node.blocks) {
+    char block[BLOCKSIZE];
+
+    // reading in the block failed
+    if (read_block(node.pointers[start_block], block) != 0) {
+        log_msg("something went wrong when reading in\n");
+        return -1;
+    }
+
+    // the number of bytes to read from this block
+    uint to_read = (BLOCKSIZE - block_offset < remaining) ? (BLOCKSIZE - block_offset) : remaining;
+
+    // make sure she dont go passed the end of the file
+    if (offset + read_size + to_read > node.size) {
+      to_read = node.size - offset - read_size;
+    }
+
+    // Copy data from block to buf
+    memcpy(buf + read_size, block + block_offset, to_read);
+
+    // Update counters
+    read_size += to_read;
+    remaining -= to_read;
+    start_block++;
+
+    // Reset block offset!
+    block_offset = 0;
 }
+
+  return read_size;
+}
+
 
 int my_write(uint inodenum, char *buf, uint size, uint offset) {
   int retstat = 0;
-  log_msg("my_write(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
+  log_msg("my_read(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
 
-  // FIXME: Write this function
+  inode node;
 
-  return retstat;
+  // no inode found
+  if (get_inode(inodenum, &node) != 0) {
+    log_msg("no inode was found\n");
+    return -1;
+  }
+
+  uint start_block = offset / BLOCKSIZE;
+  uint block_offset = offset % BLOCKSIZE;
+
+  uint remaining = size;
+  uint write_size = 0;
+
+  // go through the blocks
+  while (remaining > 0) {
+    if (start_block >= node.blocks) {
+
+      // Allocate new blocks as needed
+      while (start_block >= node.blocks) {
+
+        // find a free block
+        uint new_block = get_next_free_block();
+
+        // could not find a free block
+        if (new_block == 0) { 
+          log_msg("there is no free block\n");
+          return -1;
+        }
+
+        node.pointers[node.blocks++] = new_block;
+      }
+
+      // update the inode
+      set_inode(inodenum, &node); 
+    }
+
+    char block[BLOCKSIZE];
+
+    if (start_block < node.blocks - 1 || block_offset != 0) {
+
+      // either if statment is wrong or you could not read in the block
+      if (read_block(node.pointers[start_block], block) != 0) {
+        
+        log_msg("either if statment is wrong or you could not read in the block\n");
+        return -1; 
+      }
+
+    } else {
+
+      // clear a new block for use
+      memset(block, 0, BLOCKSIZE);
+    }
+      
+    // copying from buf to block
+    uint to_copy = (BLOCKSIZE - block_offset < remaining) ? (BLOCKSIZE - block_offset) : remaining;
+    memcpy(block + block_offset, buf + write_size, to_copy);
+
+    // could not write to block
+    if (write_block(node.pointers[start_block], block) != 0) {
+      log_msg("could not write to the block.\n");
+      return -1; 
+    }
+
+    // update the counters
+    write_size += to_copy;
+    remaining -= to_copy;
+    start_block++;
+
+    // rest the block
+    block_offset = 0;
+  }
+
+  // update the file size!!!!
+  if (offset + size > node.size) {
+    node.size = offset + size;
+  }
+
+  // Update inode
+  set_inode(inodenum, &node);
+
+  return write_size;
 }
 
 int read_dir_from_inode(dirrec *first, uint inodenum) {
