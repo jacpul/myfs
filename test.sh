@@ -9,7 +9,7 @@
 
 SOURCEFILE="myfs.c"
 DO_COMPILE=1
-DO_CLEANUP=1
+DO_CLEANUP=0
 QUIT_ON_ERROR=0
 SINGLE_TEST=0
 TEST_FILE=0
@@ -129,26 +129,32 @@ then
         if [[ $? -eq 0 ]]; then
             diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
-                echo "Test '$name' Failed :("
+				echo "Test '$name' Failed (your filesystem dump did not match ours) :("
+				echo "'diff flies/$name tests/good/flies/$name' did not match, see:"
+				diff flies/$name tests/good/flies/$name
             else
                 diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
                 if [[ $? -ne 0 ]]; then
-                    echo "Test '$name' Failed :("
+					echo "Test '$name' Failed (your filesystem JSON did not match ours) :("
+					echo "'diff swamps/$name tests/good/swamps/$name', see:"
+					diff swamps/$name tests/good/swamps/$name
                 else
                     echo "Test '$name' Passed :)"
                 fi
             fi
         else
-            echo "Test '$name' Failed :("
+			echo "Test '$name' Failed (read_fs.py dumper had a non-zero return value?) :("
         fi
     else
-        echo "Test '$name' Failed :("
+		echo "Test '$name' Failed (fly_swamp fs tester had non-zero return value?) :("
     fi
     exit 0
 fi
 
 tests=0
 good=0
+
+# all / multiple test mode
 
 for t in $(ls tests/*.test | sort -n -t / -k 2)
 do
@@ -167,15 +173,20 @@ do
         if [[ $? -eq 0 ]]; then
             diff "flies/$name" "tests/good/flies/$name" &> /dev/null
             if [[ $? -ne 0 ]]; then
-                echo "Test '$name' Failed :("
+				echo "Test '$name' Failed (your filesystem dump did not match ours) :("
+				echo "Output of 'diff flies/$name tests/good/flies/$name':"
+				diff flies/$name tests/good/flies/$name
                 if [[ $QUIT_ON_ERROR == 1 ]]; then
                     break
                 fi
             else
                 diff "swamps/$name" "tests/good/swamps/$name" &> /dev/null
                 if [[ $? -ne 0 ]]; then
-                    echo "Test '$name' Failed :("
+					echo "Test '$name' Failed (your filesystem JSON did not match ours) :("
+					echo "Output of 'diff swamps/$name tests/good/swamps/$name':"
+					diff swamps/$name tests/good/swamps/$name
                     if [[ $QUIT_ON_ERROR == 1 ]]; then
+                        cat "./swamps/$name";
                         break
                     fi
                 else
@@ -184,13 +195,13 @@ do
                 fi
             fi
         else
-            echo "Test '$name' Failed :("
+			echo "Test '$name' Failed (read_fs.py dumper had a non-zero return value?) :("
             if [[ $QUIT_ON_ERROR == 1 ]]; then
                 break
             fi
         fi
     else
-        echo "Test '$name' Failed :("
+		echo "Test '$name' Failed (fly_swamp fs tester had non-zero return value?) :("
         if [[ $QUIT_ON_ERROR == 1 ]]; then
             break
         fi
@@ -210,4 +221,3 @@ echo "Passed $good tests of the $tests tested."
 echo
 echo "Thanks for using the Fly Swamp tester!"
 echo "Please come again soon."
-

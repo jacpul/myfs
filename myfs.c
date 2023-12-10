@@ -1,4 +1,4 @@
-// Authors: Your name and your super awesome partner's name
+// Authors: Gabe Findell and Jace palkerbak
 // This program implements Very Simple File System (VSFS) based on http://pages.cs.wisc.edu/~remzi/OSFEP/file-implementation.pdf
 
 
@@ -20,11 +20,36 @@
 
 uint get_next_free_block() {
   // FIXME: Write this function
+  d_bmap map;
+  get_d_bmap(map);
+
+  for(int i = 0; i < NUM_OF_BLOCKS; i++){
+    if(map[i] == 0){
+    map[i] = 1;
+    set_d_bmap(map);
+    log_msg("Found a free block");
+    return i;
+    }
+  }
+  log_msg("Did not Find a free block");
   return 0;
 }
 
 uint get_next_free_inode() {
   // FIXME: Write this function
+  i_bmap map;
+
+  get_i_bmap(map);
+
+  for(int i = 2; i < NUM_OF_INODES; i++){
+    if(map[i] == 0){
+    map[i] = 1;
+    set_i_bmap(map);
+    log_msg("Found a free Inode\n");
+    return i;
+    }
+  }
+  log_msg("Did not find a free Inode");
   return 0;
 }
 
@@ -32,9 +57,38 @@ int my_mknod(const char *path) {
   int retstat = 0;
   log_msg("my_mknod(path=\"%s\")\n", path);
 
+  uint freeI = get_next_free_inode();
+
   char *filename;
   uint parent_inode_num;
 
+  inode new_node;
+
+  new_node.blocks = 0;
+  new_node.type = TYPE_FILE;
+  new_node.size = 0;
+
+  set_inode(freeI , &new_node);
+  log_msg("Set the new node\n");
+
+   log_msg("Created new Inode\n");
+  parent_inode_num = get_parent_dir_inode(path);
+   log_msg("Got parent directory Inode\n");
+  get_file_from_path(path, &filename);
+   log_msg("got file from path\n");
+
+
+ dirrec* new_dir = (dirrec*) malloc (sizeof(dirrec));
+  new_dir -> inum = freeI;
+  strncpy(new_dir -> name, filename, MAX_FILENAME); // get the filename into name
+  log_msg("file name: %u\n", new_dir -> inum);
+  log_msg("Created Directory\n");
+
+
+  add_rec_to_dir_inode(parent_inode_num, new_dir);
+   log_msg("Added to the Inode to the directory");
+
+ 
   // FIXME: Write this function
   // Use: get_parent_dir_inode to get the inode number of the parent dir.
   // Use: get_file_from_path to get the filename from the path.
@@ -48,19 +102,63 @@ int my_read(uint inodenum, char *buf, uint size, uint offset) {
   int retstat = 0;
   log_msg("my_read(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
 
+  inode new_inode;
+  get_inode(inodenum, &new_inode);
+
+  uint block_index = offset / BLOCKSIZE;
+  uint new_offset = offset % BLOCKSIZE;
+
+
+  //for or while
+
+
+
+  
   // FIXME: Write this function
 
   return retstat;
 }
 
 int my_write(uint inodenum, char *buf, uint size, uint offset) {
-  int retstat = 0;
-  log_msg("my_write(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
+  uint retstat = 0;
+    log_msg("my_write(inum=%u, buf=0x%08x, size=%u, offset=%u)\n", inodenum, buf, size, offset);
 
-  // FIXME: Write this function
+    inode current_inode;
+    get_inode(inodenum, &current_inode);
+    uint current_block = offset / BLOCKSIZE;
+    uint current_block_offset = offset % BLOCKSIZE;
+    uint remaining_bytes = size;
+    uint written_size = 0;
 
-  return retstat;
+
+    while(remaining_bytes > 0) {
+        while (current_block >= current_inode.size) {
+            uint free_block = get_next_free_block();
+            current_inode.pointers[current_inode.blocks++] = free_block;
+        }
+        set_inode(inodenum, &current_inode);
+
+        char block[BLOCKSIZE];
+        read_block(current_inode.pointers[current_block], block);
+        memset(block, 0, BLOCKSIZE);
+
+        uint bytes_to_copy = (BLOCKSIZE - current_block_offset < remaining_bytes) ? (BLOCKSIZE - current_block_offset) : remaining_bytes;
+        memcpy(block + current_block_offset, buf + offset, bytes_to_copy);
+        write_block(current_inode.pointers[current_block], block);
+
+        written_size += bytes_to_copy;
+        remaining_bytes -= bytes_to_copy;
+        current_block_offset = 0;
+    }
+
+    if (offset + size > current_inode.size) {
+        current_inode.size = offset + size;
+    }
+    set_inode(inodenum, &current_inode);
+
+    return written_size;
 }
+
 
 int read_dir_from_inode(dirrec *first, uint inodenum) {
   int err;
